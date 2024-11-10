@@ -19,7 +19,7 @@ const connectSocket = (app: Express) => {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: process.env.ORIGIN || '*',
+      origin: '*',
     },
   });
   roomHandlerInstance.setIo(io);
