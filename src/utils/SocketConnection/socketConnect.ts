@@ -3,7 +3,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { Express } from 'express';
 import roomHandlerInstance from "../SocketHandlers/handleAllRooms";
-import { Difficulty, HostRoomData, JoinRoomData, Message, OnlineUser, RegisterData, ScoreData, StartGameData, UserData } from '../../types/Types';
+import { Difficulty, HostRoomRequest, JoinRoomRequest, Message, MessageRequest, OnlineUser, RegisterData, ScoreData, SoloGameRequest, StartGameRequest, UserData } from '../../types/Types';
 import { SOCKET_EVENTS } from '../../constants/ServerSocketEvents';
 import ApiError from '../ApiError/ApiError';
 import getCurrentGameString from '../GetWords/getsWords';
@@ -34,29 +34,32 @@ const connectSocket = (app: Express) => {
       }
     });
 
-    socket.on(SOCKET_EVENTS.HOST_ROOM, ({ room, user, maxGameParticipants }: HostRoomData) => {
-      if (room.roomId && room.roomPassword && user) {
+    socket.on(SOCKET_EVENTS.HOST_ROOM, (request: HostRoomRequest) => {
+      if (request.room && request.room.roomId && request.room.roomPassword && request.user) {
         console.log("The request to host the room is received");
-        console.log("The room details are:", room);
-        console.log("The user details are:", user);
-        console.log("The maxGameParticipants are:", maxGameParticipants);
-        const response = roomHandlerInstance.hostRoom(room, user, maxGameParticipants, socket);
+        console.log("The room details are:", request.room);
+        console.log("The user details are:", request.user);
+        console.log("The maxGameParticipants are:", request.maxRoomPlayers);
+        const response = roomHandlerInstance.hostRoom(request.room, request.user, request.maxRoomPlayers, socket);
 
         if (response && response.statusCode === 200) {
           socket.emit(SOCKET_EVENTS.HOSTING_RESPONSE, response);
-          console.log(`Room ${room.roomId} created and user ${user.username} joined.`);
+          console.log(`Room ${request.room.roomId} created and user ${request.user.username} joined.`);
         } else {
           socket.emit(SOCKET_EVENTS.HOSTING_RESPONSE, new ApiError(500, "Error while hosting the room"));
         }
+
+      } else {
+        socket.emit(SOCKET_EVENTS.HOSTING_RESPONSE, new ApiError(500, "Incomplete data received"));
       }
     });
 
-    socket.on(SOCKET_EVENTS.JOIN_ROOM, ({ room, user }: JoinRoomData) => {
+    socket.on(SOCKET_EVENTS.JOIN_ROOM, ({room, user}: JoinRoomRequest) => {
       
-      if (room.roomId && room.roomPassword && user) {
+      if (room && room.roomId && room.roomPassword && user) {
         console.log("The request to join the room is received");
-        // console.log("The room details are:", room);
-        // console.log("The user details are:", user);
+        console.log("The room details are:", room);
+        console.log("The user details are:", user);
         const response = roomHandlerInstance.joinRoom(room.roomId, room.roomPassword, user, socket);
         console.log("The joinRoom response is: ", response);
         if (response.statusCode === 200) {
@@ -69,36 +72,90 @@ const connectSocket = (app: Express) => {
       }
     });
 
-    socket.on(SOCKET_EVENTS.START_GAME, (data:StartGameData) => {
-      if (data.roomId) {
-        console.log("The request to start the game is received");
-        console.log("The room details are:", data.roomId);
-        console.log("The gameData details are:", data);
-        const response = roomHandlerInstance.startGame(data.roomId, data.gameData);
-        console.log("The startGame response is: ", response);
-        if (response.statusCode === 200) {
-          console.log(`Game started in room ${data.roomId}.`);
-        } else {
-          console.log("Error while starting the game");
-        }
+    socket.on(SOCKET_EVENTS.START_GAME, (request: StartGameRequest) => {
+      console.log("The request to start the game is received");
+      if (!request) {
+        console.log("No request data received.");
+        return;
       }
-    })
+      console.log("The received request is:", request);
+      if (!request.gameData) {
+        
+        console.log("No gameData received in the request.");
+        return;
+      }
+      console.log("The received gameData is:", request.gameData);
+      if (!request.gameData.room) {
+        console.log("No room data received in gameData.");
+        return;
+      }
+      console.log("The received room is:", request.gameData.room);
+      if (!request.gameData.room.roomId) {
+        console.log("No roomId received in room data.");
+        return;
+      }
+      console.log("The received roomId is:", request.gameData.room.roomId);
+      if (!request.gameData.room.roomPassword) {
+        console.log("No roomPassword received in room data.");
+        return;
+      }
+      console.log("The received roomId is:", request.gameData.room.roomPassword);
+      if (!request.gameData.players) {
+        console.log("No players data received in gameData.");
+        return;
+      }
+      console.log("The received players are:", request.gameData.players);
+      console.log("The received no players received are:", request.gameData.players.length);
+      console.log("The received maxPlayers are:", request.gameData.maxRoomPlayers);
+      if (request.gameData.players.length !== request.gameData.maxRoomPlayers) {
+        console.log("Number of players does not match maxRoomPlayers.");
+        return;
+      }
+      console.log("The request to start the game is received");
+      console.log("The room details are:", request.gameData.room);
+      console.log("The gameData details are:", request.gameData);
+      const response = roomHandlerInstance.startGame(request.gameData);
+      console.log("The startGame response is: ", response);
+      if (response.statusCode === 200) {
+        console.log(`Game started in room ${request.gameData.room.roomId}.`);
+      } else {
+        console.log("Error while starting the game");
+      }
+    });
+    
+    
 
 
-    socket.on(SOCKET_EVENTS.NEW_MESSAGE, (data: Message) => {
-      if (data.message && data.sender && data.roomId) {
-        console.log("The message received is: ", data.message);
-        console.log("The message is received from the user: ", data.sender.username);
-        console.log("The message is received in the room: ", data.roomId);
-        const res = roomHandlerInstance.broadcastMessage(data.roomId, data.sender, data.message, socket);
+    socket.on(SOCKET_EVENTS.NEW_MESSAGE, (request: MessageRequest) => {
+      if(!request){
+        console.log("No message request received");
+        return;
+      }
+      console.log("The message request received is: ", request);
+      if(!request.roomId){
+        console.log("No roomId received in the message request");
+        return;
+      }
+      console.log("The roomId received is: ", request.roomId);
+      if(!request.sender){
+        console.log("No sender received in the message request");
+        return;
+      }
+      console.log("The sender received is: ", request.sender);
+      if(!request.content){
+        console.log("No content received in the message request");
+        return;
+      }
+      console.log("The content received is: ", request.content);
+      const response = roomHandlerInstance.broadcastMessage(request.roomId, request.sender, request.content, socket);
+      console.log("The broadcastMessage response is: ", response);
 
-        if(res){
-          console.log("Message broadcasted successfully");
-          console.log("The boradcastResponse is: ", res);
-        }
+      if(response){
+        console.log("Message broadcasted successfully");
       }else{
-        console.log("No message received");
+        console.log("Error while broadcasting the message");
       }
+      
     });
 
     socket.on(SOCKET_EVENTS.UPDATE_SCORE, (data: ScoreData) => {
@@ -117,13 +174,13 @@ const connectSocket = (app: Express) => {
       }
     });
 
-    socket.on(SOCKET_EVENTS.GET_SOLO_GAME_STRING, (data: Difficulty) => {
-      console.log("The solo game string request received is: ", data);
+    socket.on(SOCKET_EVENTS.START_SOLO_GAME, (data: SoloGameRequest) => {
       if (data) {
         console.log("The solo game string request received is: ", data);
-        const gameString = getCurrentGameString(data);
+        const gameString = getCurrentGameString(data.difficulty);
         console.log("The soloGameString is: ", gameString);
-        socket.emit(SOCKET_EVENTS.SOLO_GAME_STRING_RESPONSE, new ApiResponse(200,"Game started successfully", {gameString}));
+        data.gameString = gameString;
+        socket.emit(SOCKET_EVENTS.SOLO_GAME_START_RESPONSE, new ApiResponse(200,"Game started successfully", data));
       }else{
         console.log("No solo game string request received");
       }

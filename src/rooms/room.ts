@@ -5,10 +5,10 @@ import ApiResponse from "../utils/ApiResponse/ApiResponse";
 class Room {
   public users: { user: UserData; socketId: string }[] = [];
 
-  constructor(public roomId: string, public roomPassword: string, public maxGameParticipants:number) {}
+  constructor(public roomId: string, public roomPassword: string, public maxRoomPlayers:number) {}
 
   addUser(user: UserData, socket: Socket): ApiResponse {
-    if (this.users.length >= this.maxGameParticipants) return new ApiResponse(403, "Room is full");
+    if (this.users.length >= this.maxRoomPlayers) return new ApiResponse(403, "Room is full");
 
     this.users.push({ user, socketId: socket.id });
     socket.join(this.roomId);
@@ -24,7 +24,7 @@ class Room {
   }
 
   isUserInRoom(userId: string): boolean {
-    return this.users.some(({ user }) => user.Id === userId);
+    return this.users.some(({ user }) => user.id === userId);
   }
 
   validatePassword(password: string): boolean {
