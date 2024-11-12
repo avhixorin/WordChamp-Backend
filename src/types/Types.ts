@@ -73,14 +73,18 @@ export type ScoreData = {
   roomId: string;
   guessedWord?: string;
 };
+export type UpdateScoreRequest = {
+  roomData: MultiPlayerRoomData;
+  player: UserData;
+  guessedWord: Answer;
+}
+
+// Score Update Response
 export type UpdateScoreResponse = {
   statusCode: number;
   message: string;
-  data: {
-    user: UserData;
-    score: number;
-  };
-};
+  data: MultiPlayerRoomData;
+}
 
 // PowerUp Type
 export type PowerUp = {

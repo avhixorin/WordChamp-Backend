@@ -3,7 +3,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { Express } from 'express';
 import roomHandlerInstance from "../SocketHandlers/handleAllRooms";
-import { Difficulty, HostRoomRequest, JoinRoomRequest, Message, MessageRequest, OnlineUser, RegisterData, ScoreData, SoloGameRequest, StartGameRequest, UserData } from '../../types/Types';
+import { Difficulty, HostRoomRequest, JoinRoomRequest, Message, MessageRequest, OnlineUser, RegisterData, ScoreData, SoloGameRequest, StartGameRequest, UpdateScoreRequest, UserData } from '../../types/Types';
 import { SOCKET_EVENTS } from '../../constants/ServerSocketEvents';
 import ApiError from '../ApiError/ApiError';
 import getCurrentGameString from '../GetWords/getsWords';
@@ -155,19 +155,11 @@ const connectSocket = (app: Express) => {
       
     });
 
-    socket.on(SOCKET_EVENTS.UPDATE_SCORE, (data: ScoreData) => {
-      console.log("The score data received is: ", data);
-      if (data.playerId && data.roomId && data.score) {
-        const res = roomHandlerInstance.updateScore(data.playerId, data.roomId, data.guessedWord, data.score, socket);
-        console.log("The updateScore response is: ", res);
-        if(res){
-          console.log("Score updated successfully");
-          console.log("The updateScoreResponse is: ", res);
-        }else{
-          console.log("Error while updating the score");
-        }
-      }else{
-        console.log("No score data received");
+    socket.on(SOCKET_EVENTS.UPDATE_SCORE, (data: UpdateScoreRequest) => {
+      if(data){
+        console.log("The update score request received is: ", data);
+        const response = roomHandlerInstance.updateScore(data,socket);
+        console.log("The updateScore response is: ", response);
       }
     });
 

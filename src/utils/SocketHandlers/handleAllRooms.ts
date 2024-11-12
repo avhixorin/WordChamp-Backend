@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import Room from "../../rooms/room";
 import ApiResponse from "../ApiResponse/ApiResponse";
 import { SOCKET_EVENTS } from "../../constants/ServerSocketEvents";
-import {  MultiPlayerRoomData, SharedGameData, StartGameRequest, UserData } from "../../types/Types";
+import {  MultiPlayerRoomData, SharedGameData, StartGameRequest, UpdateScoreRequest, UserData } from "../../types/Types";
 import getCurrentGameString, { getDifficultySettings } from "../GetWords/getsWords";
 
 class RoomHandler {
@@ -140,30 +140,43 @@ class RoomHandler {
   }
 
   // New updateScore function
-  public updateScore(
-    userId: string,
-    roomId: string,
-    guessedWord: string | undefined,
-    score: number,
-    socket: Socket
-  ): ApiResponse {
-    const room = this.getRoomById(roomId);
-    if (!room) return new ApiResponse(404, "Room not found");
-    console.log("Inside updateScore function", userId, roomId, guessedWord, score);
-    const user = room.users.find((u) => u.user.username === userId);
-    if (!user) return new ApiResponse(404, "User not found in room");
+  // New updateScore function
+public updateScore(
+  data: UpdateScoreRequest,
+  socket: Socket
+): ApiResponse {
+  const room = this.getRoomById(data.roomData.room.roomId);
+  if (!room) return new ApiResponse(404, "Room not found");
   
-    // Emit updated score to all users except the requester
-    if (this.io) {
-      // Emit to all users except the sender (requester)
-      socket.broadcast.to(roomId).emit(SOCKET_EVENTS.UPDATE_SCORE_RESPONSE, new ApiResponse(200, `${user.user.username} guessed the word ${guessedWord} and got + ${score}`, { user, score, guessedWord }));
-    }
-  
-    return new ApiResponse(200, "Score updated successfully", {
-      userId: userId,
-      score: score,
-    });
+  // Find the user in the room by matching user ID
+  const user = room.users.find((u) => u.user.id === data.player.id);
+  if (!user) return new ApiResponse(404, "User not found in room");
+
+  // Update guessed words and player score in roomData
+  data.roomData.guessedWords.push(data.guessedWord.word);
+  data.player.score += data.guessedWord.awardedPoints;
+
+  // Update the score for the player in roomData
+  data.roomData.players = data.roomData.players.map((p) =>
+    p.id === data.player.id ? { ...p, score: data.player.score } : p
+  );
+
+  // Emit updated score to all users except the requester
+  if (this.io) {
+    this.io.to(data.roomData.room.roomId).emit(
+      SOCKET_EVENTS.UPDATE_SCORE_RESPONSE,
+      new ApiResponse(
+        200,
+        `${data.player.username} answered ${data.guessedWord.word} and got ${data.guessedWord.awardedPoints}`,
+        data.roomData
+      )
+    );
   }
+  
+
+  return new ApiResponse(200, "Score updated successfully", data.roomData);
+}
+
   
 
   public broadcastMessage(
