@@ -16,7 +16,7 @@ export const SOCKET_EVENTS = {
     UPDATE_SCORE: "updateScore",
     UPDATE_SCORE_RESPONSE: "updateScoreResponse",
     START_SOLO_GAME: "getSoloGameString",
-    SOLO_GAME_START_RESPONSE: "soloGameStringResponse",
+    START_SOLO_GAME_RESPONSE: "soloGameStringResponse",
     TIMER: "timer",
     USER_STOPPED_TYPING: "userStoppedTyping",
     NO_OF_USERS: "noOfUsers",

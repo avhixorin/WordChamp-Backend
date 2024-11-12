@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import http from 'http';
+import http, { request } from 'http';
 import dotenv from 'dotenv';
 import { Express } from 'express';
 import roomHandlerInstance from "../SocketHandlers/handleAllRooms";
@@ -109,6 +109,15 @@ const connectSocket = (app: Express) => {
       }
     });
 
+    socket.on(SOCKET_EVENTS.START_SOLO_GAME, (request: SoloGameRequest) => {
+      if(request){
+        const response = roomHandlerInstance.startSoloGame(request);
+        if(response.statusCode === 200){
+          socket.emit(SOCKET_EVENTS.START_SOLO_GAME_RESPONSE, response);
+        }
+      }
+
+    })
     
 
     socket.on("disconnect", (reason) => {

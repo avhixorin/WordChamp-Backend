@@ -5,6 +5,7 @@ import { SOCKET_EVENTS } from "../../constants/ServerSocketEvents";
 import {
   MultiPlayerRoomData,
   SharedGameData,
+  SoloGameRequest,
   StartGameRequest,
   UpdateScoreRequest,
   UserData,
@@ -147,7 +148,6 @@ class RoomHandler {
     if (!room) return new ApiResponse(404, "Room not found");
     const gameString = getCurrentGameString(gameData.roomDifficulty);
     gameData.gameString = gameString;
-    // const { timer } = getDifficultySettings(gameData);
 
     if (this.io) {
       // Emit to all users in the room, including the requester
@@ -223,6 +223,15 @@ class RoomHandler {
     }
 
     return new ApiResponse(200, "Message sent successfully");
+  }
+
+  public startSoloGame(data: SoloGameRequest): ApiResponse {
+    const gameString = getCurrentGameString(data.difficulty);
+    const difficultySettings = getDifficultySettings(data.difficulty);
+
+    data.gameString = gameString;
+
+    return new ApiResponse(200, "Game started successfully", data);
   }
 }
 
