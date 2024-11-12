@@ -35,9 +35,6 @@ wordRouter.get('/getWords/:noOfWords/:difficulty', (req: Request, res: Response)
   words = words.sort(() => Math.random() - 0.5); 
 
   const limitedWords = words.slice(0, wordCount);
-  console.log("Number of words requested: ", wordCount);
-  console.log("Difficulty: ", difficulty);
-  console.log("Filtered words: ", limitedWords);
 
   if (limitedWords.length === 0) {
     res.json(new ApiResponse(404, 'No words found matching your criteria.'));
