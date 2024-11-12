@@ -130,11 +130,7 @@ class RoomHandler {
       // Emit to all users in the room, including the requester
       this.io.to(gameData.room.roomId).emit(SOCKET_EVENTS.START_GAME_RESPONSE, new ApiResponse(200, "Game started successfully", {gameData} ));
     }
-    // if (this.io) {
-    //   // Emit to all users in the room, including the requester
-    //   this.io.to(gameData.room.roomId).emit(SOCKET_EVENTS.TIMER, new ApiResponse(200, "Game started successfully", { timer }));
-    // }
-
+    
     return new ApiResponse(200, "Game started successfully", { gameData });
   }
 
