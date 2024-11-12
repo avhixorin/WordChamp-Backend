@@ -2,8 +2,16 @@ import { Server, Socket } from "socket.io";
 import Room from "../../rooms/room";
 import ApiResponse from "../ApiResponse/ApiResponse";
 import { SOCKET_EVENTS } from "../../constants/ServerSocketEvents";
-import {  MultiPlayerRoomData, SharedGameData, StartGameRequest, UpdateScoreRequest, UserData } from "../../types/Types";
-import getCurrentGameString, { getDifficultySettings } from "../GetWords/getsWords";
+import {
+  MultiPlayerRoomData,
+  SharedGameData,
+  StartGameRequest,
+  UpdateScoreRequest,
+  UserData,
+} from "../../types/Types";
+import getCurrentGameString, {
+  getDifficultySettings,
+} from "../GetWords/getsWords";
 
 class RoomHandler {
   private static instance: RoomHandler;
@@ -28,7 +36,12 @@ class RoomHandler {
     return new ApiResponse(200, "Room created successfully");
   }
 
-  public hostRoom(room: Room, user: UserData, maxRoomPlayers:number, socket: Socket): ApiResponse {
+  public hostRoom(
+    room: Room,
+    user: UserData,
+    maxRoomPlayers: number,
+    socket: Socket
+  ): ApiResponse {
     const newRoom = new Room(room.roomId, room.roomPassword, maxRoomPlayers);
     newRoom.addUser(user, socket);
     this.addRoom(newRoom);
@@ -67,14 +80,17 @@ class RoomHandler {
       });
 
       // Announce that a new user has joined the room, excluding the new user
-      socket.broadcast.to(roomId).emit(SOCKET_EVENTS.NEW_USER, new ApiResponse(200,`${user.username} has joined the game.`,{
-        user: user,
-      }));
+      socket.broadcast.to(roomId).emit(
+        SOCKET_EVENTS.NEW_USER,
+        new ApiResponse(200, `${user.username} has joined the game.`, {
+          user: user,
+        })
+      );
     }
 
     return new ApiResponse(200, "Joined room successfully", {
       maxRoomPlayers: room.maxRoomPlayers,
-      players: room.getAllUsers()
+      players: room.getAllUsers(),
     });
   }
 
@@ -100,7 +116,14 @@ class RoomHandler {
       room.users = room.users.filter((u) => u.socketId !== socketId);
 
       if (this.io) {
-        this.io.to(room.roomId).emit(SOCKET_EVENTS.LEAVE_ROOM, new ApiResponse(200, `${leavingUser.username} has left the room`, { user: leavingUser }));
+        this.io
+          .to(room.roomId)
+          .emit(
+            SOCKET_EVENTS.LEAVE_ROOM,
+            new ApiResponse(200, `${leavingUser.username} has left the room`, {
+              user: leavingUser,
+            })
+          );
 
         if (room.users.length > 0) {
           this.io.to(room.roomId).emit(SOCKET_EVENTS.NO_OF_USERS, {
@@ -128,51 +151,56 @@ class RoomHandler {
 
     if (this.io) {
       // Emit to all users in the room, including the requester
-      this.io.to(gameData.room.roomId).emit(SOCKET_EVENTS.START_GAME_RESPONSE, new ApiResponse(200, "Game started successfully", {gameData} ));
+      this.io
+        .to(gameData.room.roomId)
+        .emit(
+          SOCKET_EVENTS.START_GAME_RESPONSE,
+          new ApiResponse(200, "Game started successfully", { gameData })
+        );
     }
-    
+
     return new ApiResponse(200, "Game started successfully", { gameData });
   }
 
   // New updateScore function
-  // New updateScore function
-public updateScore(
-  data: UpdateScoreRequest,
-  socket: Socket
-): ApiResponse {
-  const room = this.getRoomById(data.roomData.room.roomId);
-  if (!room) return new ApiResponse(404, "Room not found");
-  
-  // Find the user in the room by matching user ID
-  const user = room.users.find((u) => u.user.id === data.player.id);
-  if (!user) return new ApiResponse(404, "User not found in room");
+  public updateScore(data: UpdateScoreRequest, socket: Socket): ApiResponse {
+    const room = this.getRoomById(data.roomData.room.roomId);
+    if (!room) return new ApiResponse(404, "Room not found");
 
-  // Update guessed words and player score in roomData
-  data.roomData.guessedWords.push(data.guessedWord.word);
-  data.player.score += data.guessedWord.awardedPoints;
+    // Find the user in the room by matching user ID
+    const user = room.users.find((u) => u.user.id === data.player.id);
+    if (!user) return new ApiResponse(404, "User not found in room");
 
-  // Update the score for the player in roomData
-  data.roomData.players = data.roomData.players.map((p) =>
-    p.id === data.player.id ? { ...p, score: data.player.score } : p
-  );
+    // Update guessed words and player score in roomData
+    // data.roomData.guessedWords.push(data.guessedWord.word);
+    // data.player.score += data.guessedWord.awardedPoints;
 
-  // Emit updated score to all users except the requester
-  if (this.io) {
-    this.io.to(data.roomData.room.roomId).emit(
-      SOCKET_EVENTS.UPDATE_SCORE_RESPONSE,
-      new ApiResponse(
-        200,
-        `${data.player.username} answered ${data.guessedWord.word} and got ${data.guessedWord.awardedPoints}`,
-        data.roomData
-      )
-    );
+    // Update the score for the player in roomData
+    // data.roomData.players = data.roomData.players.map((p) =>
+    //   p.id === data.player.id ? { ...p, score: data.player.score } : p
+    // );
+
+    // Emit updated score to all users except the requester
+    if (this.io) {
+      room.users.forEach((userInRoom) => {
+        // Send the update to all users except the requester
+        if (userInRoom.user.id !== data.player.id) {
+          if(this.io) this.io
+            .to(userInRoom.socketId)
+            .emit(
+              SOCKET_EVENTS.UPDATE_SCORE_RESPONSE,
+              new ApiResponse(
+                200,
+                `${data.player.username} answered ${data.guessedWord.word} and got ${data.guessedWord.awardedPoints}`,
+                { player: data.player, guessedWord: data.guessedWord }
+              )
+            );
+        }
+      });
+    }
+
+    return new ApiResponse(200, "Score updated successfully", data.roomData);
   }
-  
-
-  return new ApiResponse(200, "Score updated successfully", data.roomData);
-}
-
-  
 
   public broadcastMessage(
     roomId: string,
@@ -186,7 +214,15 @@ public updateScore(
       return new ApiResponse(403, "Sender is not a member of the room");
 
     if (this.io) {
-      socket.broadcast.to(roomId).emit(SOCKET_EVENTS.NEW_MESSAGE_RESPONSE, new ApiResponse(200, "Message sent successfully", {content: message, sender}));
+      socket.broadcast
+        .to(roomId)
+        .emit(
+          SOCKET_EVENTS.NEW_MESSAGE_RESPONSE,
+          new ApiResponse(200, "Message sent successfully", {
+            content: message,
+            sender,
+          })
+        );
     }
 
     return new ApiResponse(200, "Message sent successfully");

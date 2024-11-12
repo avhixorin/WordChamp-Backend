@@ -36,19 +36,19 @@ export type MessageRequest = {
   roomId: string;
   sender: UserData;
   content: string;
-}
+};
 
 export type Message = {
   content: string;
   sender: UserData;
-}
+};
 
 // Message Response
 export type MessageResponse = {
   statusCode: number;
   message: string;
   data: Message;
-}
+};
 export type SharedGameData = {
   maxGameParticipants: number;
   currentGameString: string;
@@ -57,7 +57,7 @@ export type SharedGameData = {
 
 export type StartGameRequest = {
   gameData: MultiPlayerRoomData;
-}
+};
 
 export type StartGameResponse = {
   statusCode: number;
@@ -65,7 +65,7 @@ export type StartGameResponse = {
   data: {
     gameData: MultiPlayerRoomData;
   };
-}
+};
 
 export type ScoreData = {
   playerId: string;
@@ -77,14 +77,17 @@ export type UpdateScoreRequest = {
   roomData: MultiPlayerRoomData;
   player: UserData;
   guessedWord: Answer;
-}
+};
 
 // Score Update Response
 export type UpdateScoreResponse = {
   statusCode: number;
   message: string;
-  data: MultiPlayerRoomData;
-}
+  data: {
+    player: UserData;
+    guessedWord: Answer;
+  };
+};
 
 // PowerUp Type
 export type PowerUp = {
@@ -148,7 +151,7 @@ export type SoloGameRequest = {
   guessedWords: string[];
   answers: Answer[];
   theme: Theme;
-}
+};
 
 // MultiPlayerRoomData Type
 export type MultiPlayerRoomData = {
