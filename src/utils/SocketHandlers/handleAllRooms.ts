@@ -170,15 +170,12 @@ class RoomHandler {
     // Find the user in the room by matching user ID
     const user = room.users.find((u) => u.user.id === data.player.id);
     if (!user) return new ApiResponse(404, "User not found in room");
-
-    // Update guessed words and player score in roomData
-    // data.roomData.guessedWords.push(data.guessedWord.word);
-    // data.player.score += data.guessedWord.awardedPoints;
-
-    // Update the score for the player in roomData
-    // data.roomData.players = data.roomData.players.map((p) =>
-    //   p.id === data.player.id ? { ...p, score: data.player.score } : p
-    // );
+    let message = ""
+    if(data.guessedWord.awardedPoints > 0) {
+      message = `${data.player.username} answered ${data.guessedWord.word} and got + ${data.guessedWord.awardedPoints}`
+    }else{
+      message = `${data.player.username} answered ${data.guessedWord.word} and got - ${data.guessedWord.awardedPoints}`
+    }
 
     // Emit updated score to all users except the requester
     if (this.io) {
@@ -191,7 +188,7 @@ class RoomHandler {
               SOCKET_EVENTS.UPDATE_SCORE_RESPONSE,
               new ApiResponse(
                 200,
-                `${data.player.username} answered ${data.guessedWord.word} and got ${data.guessedWord.awardedPoints}`,
+                message,
                 { player: data.player, guessedWord: data.guessedWord }
               )
             );
