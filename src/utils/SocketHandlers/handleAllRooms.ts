@@ -122,7 +122,7 @@ class RoomHandler {
   public startGame(gameData: MultiPlayerRoomData): ApiResponse {
     const room = this.getRoomById(gameData.room.roomId);
     if (!room) return new ApiResponse(404, "Room not found");
-
+    console.log("The gameDifficulty received is:", gameData.roomDifficulty);
     const gameString = getCurrentGameString(gameData.roomDifficulty);
     gameData.gameString = gameString;
     // const { timer } = getDifficultySettings(gameData);

@@ -122,9 +122,6 @@ const connectSocket = (app: Express) => {
         console.log("Error while starting the game");
       }
     });
-    
-    
-
 
     socket.on(SOCKET_EVENTS.NEW_MESSAGE, (request: MessageRequest) => {
       if(!request){
