@@ -109,13 +109,7 @@ const connectSocket = (app: Express) => {
       }
     });
 
-    socket.on(SOCKET_EVENTS.START_SOLO_GAME, (data: SoloGameRequest) => {
-      if (data) {
-        const gameString = getCurrentGameString(data.difficulty);
-        data.gameString = gameString;
-        socket.emit(SOCKET_EVENTS.SOLO_GAME_START_RESPONSE, new ApiResponse(200,"Game started successfully", data));
-      }
-    });
+    
 
     socket.on("disconnect", (reason) => {
       const response = roomHandlerInstance.removeUserFromRoom(socket.id);
