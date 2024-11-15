@@ -4,9 +4,7 @@ import ApiResponse from "../ApiResponse/ApiResponse";
 import { SOCKET_EVENTS } from "../../constants/ServerSocketEvents";
 import {
   MultiPlayerRoomData,
-  SharedGameData,
   SoloGameRequest,
-  StartGameRequest,
   UpdateScoreRequest,
   UserData,
 } from "../../types/Types";
