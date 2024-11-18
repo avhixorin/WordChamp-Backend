@@ -8,9 +8,13 @@ dotenv.config();
 
 export const app = express();
 
-app.use(cors({
-  origin: '*', 
-}));
+const corsOptions = {
+  origin: process.env.ORIGIN,  // The URL of your frontend
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
