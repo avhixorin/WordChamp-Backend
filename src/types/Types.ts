@@ -49,11 +49,6 @@ export type MessageResponse = {
   message: string;
   data: Message;
 };
-export type SharedGameData = {
-  maxGameParticipants: number;
-  currentGameString: string;
-  difficulty: Difficulty;
-};
 
 export type StartGameRequest = {
   gameData: MultiPlayerRoomData;
