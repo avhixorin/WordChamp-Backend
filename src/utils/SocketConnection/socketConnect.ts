@@ -1,22 +1,26 @@
 import { Server, Socket } from 'socket.io';
-import http, { request } from 'http';
+import https from 'https'
 import dotenv from 'dotenv';
 import { Express } from 'express';
 import roomHandlerInstance from "../SocketHandlers/handleAllRooms";
 import { Difficulty, HostRoomRequest, JoinRoomRequest, Message, MessageRequest, OnlineUser, RegisterData, ScoreData, SoloGameRequest, StartGameRequest, UpdateScoreRequest, UserData } from '../../types/Types';
 import { SOCKET_EVENTS } from '../../constants/ServerSocketEvents';
 import ApiError from '../ApiError/ApiError';
-import getCurrentGameString from '../GetWords/getsWords';
-import ApiResponse from '../ApiResponse/ApiResponse';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
 let users: OnlineUser[] = [];
+import fs from 'fs';
+
 
 const connectSocket = (app: Express) => {
-  const server = http.createServer(app);
+  const httpsOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/word-champ.avhixorin.me/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/word-champ.avhixorin.me/fullchain.pem'),
+  };
+  const server = https.createServer(httpsOptions,app);
   const io = new Server(server, {
     cors: {
       origin: process.env.ORIGIN,

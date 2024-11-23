@@ -1,0 +1,36 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Add SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_EC2_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+    - name: Set up SSH Config
+      run: |
+        echo -e "Host ec2-instance\n" \
+              "  HostName 18.233.241.138\n" \
+              "  User ubuntu\n" \
+              "  IdentityFile ~/.ssh/id_rsa\n" \
+              "  StrictHostKeyChecking no\n" > ~/.ssh/config
+
+    - name: Deploy Code to EC2
+      run: |
+        ssh ec2-instance 'bash -s' << 'EOF'
+        cd /WordChamp-Backend
+        git pull origin main
+        npm install
+        EOF
