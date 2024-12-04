@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import https from 'https'
+import http from 'http'
 import dotenv from 'dotenv';
 import { Express } from 'express';
 import roomHandlerInstance from "../SocketHandlers/handleAllRooms";
@@ -12,15 +12,11 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 let users: OnlineUser[] = [];
-import fs from 'fs';
 
 
 const connectSocket = (app: Express) => {
-  const httpsOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/word-champ.avhixorin.me/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/word-champ.avhixorin.me/fullchain.pem'),
-  };
-  const server = https.createServer(httpsOptions,app);
+  
+  const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
       origin: process.env.ORIGIN,
