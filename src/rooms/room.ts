@@ -31,7 +31,6 @@ class Room {
     return this.roomPassword === password;
   }
 
-  // New method to get all users in the room
   getAllUsers(): UserData[] {
     return this.users.map(({ user }) => user);
   }
