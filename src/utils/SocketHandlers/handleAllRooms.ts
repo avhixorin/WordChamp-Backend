@@ -78,7 +78,6 @@ class RoomHandler {
         userCount: room.users.length,
       });
 
-      // Announce that a new user has joined the room, excluding the new user
       socket.broadcast.to(roomId).emit(
         SOCKET_EVENTS.NEW_USER,
         new ApiResponse(200, `${user.username} has joined the game.`, {
@@ -129,7 +128,7 @@ class RoomHandler {
             userCount: room.users.length,
           });
         } else {
-          this.rooms.splice(roomIndex, 1); // Remove empty room
+          this.rooms.splice(roomIndex, 1);
         }
       }
 
@@ -148,7 +147,6 @@ class RoomHandler {
     gameData.gameString = gameString;
 
     if (this.io) {
-      // Emit to all users in the room, including the requester
       this.io
         .to(gameData.room.roomId)
         .emit(
@@ -160,12 +158,10 @@ class RoomHandler {
     return new ApiResponse(200, "Game started successfully", { gameData });
   }
 
-  // New updateScore function
   public updateScore(data: UpdateScoreRequest, socket: Socket): ApiResponse {
     const room = this.getRoomById(data.roomData.room.roomId);
     if (!room) return new ApiResponse(404, "Room not found");
 
-    // Find the user in the room by matching user ID
     const user = room.users.find((u) => u.user.id === data.player.id);
     if (!user) return new ApiResponse(404, "User not found in room");
     let message = ""
@@ -175,10 +171,8 @@ class RoomHandler {
       message = `${data.player.username} answered ${data.guessedWord.word} and got - ${data.guessedWord.awardedPoints}`
     }
 
-    // Emit updated score to all users except the requester
     if (this.io) {
       room.users.forEach((userInRoom) => {
-        // Send the update to all users except the requester
         if (userInRoom.user.id !== data.player.id) {
           if(this.io) this.io
             .to(userInRoom.socketId)
